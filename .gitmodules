@@ -1,0 +1,3 @@
+[submodule "src/third_party/Pokemon-Showdown"]
+	path = src/third_party/Pokemon-Showdown
+	url = git@github.com:Zarel/Pokemon-Showdown.git
