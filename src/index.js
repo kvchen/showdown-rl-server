@@ -5,13 +5,15 @@
 
 "use strict";
 
+const _ = require("lodash");
 const Koa = require("koa");
 const Router = require("koa-router");
 
 const bodyParser = require("koa-bodyparser");
 const uuidv4 = require("uuid/v4");
 
-const Sim = require("./third_party/Pokemon-Showdown/sim");
+const { Battle } = require("./third_party/Pokemon-Showdown/sim");
+const cloneBattle = require("./cloneBattle");
 
 const app = new Koa();
 const router = new Router();
@@ -28,45 +30,71 @@ const children = {};
  * to refer to this game.
  */
 router.post("/game/new", async ctx => {
-  const stream = new Sim.BattleStream();
   const options = {
-    ...ctx.request.body,
     p1: {},
-    p2: {}
+    p2: {},
+    ...ctx.request.body
   };
-  stream.write(`>start ${JSON.stringify(options)}`);
+  const battle = new Battle(options);
+  const battleID = uuidv4();
+  battles[battleID] = battle;
 
-  const id = uuidv4();
-  const battle = stream.battle;
-  battles[id] = battle;
-
-  ctx.body = { id, battle: battle.toString() };
+  ctx.body = { battleID, battle: battle.toString() };
 });
 
 /**
  * Get a JSON blob with details about the given game
  */
-router.get("/game/:id", async ctx => {
-  const id = ctx.params.id;
-  ctx.body = { battle: battles[id].toString() };
+router.get("/game/:battleID", async ctx => {
+  const { battleID } = ctx.params;
+  const battle = battles[battleID];
+
+  ctx.body = { battleID, battle: battle.toString() };
 });
 
 /**
  * Makes an (immutable) move. Returns the newly created child battle ID and
  * the battle details.
  */
-router.post("/game/:id/move", (ctx, next) => {
-  const oldID = ctx.params.id;
-  const oldBattle = battles[id];
+router.post("/game/:battleID/move", async ctx => {
+  const { battleID: oldBattleID } = ctx.params;
+  const oldBattle = battles[oldBattleID];
+  const { moveType, message } = ctx.request.body;
 
   // Copy the old battle to ensure we don't mutate it.
-  const newBattle = oldBattle.deepClone();
+  const newBattleID = uuidv4();
+  const newBattle = cloneBattle(oldBattle);
+
+  switch (moveType) {
+    case "p1":
+    case "p2":
+      if (message === "undo") {
+        newBattle.undoChoice(moveType);
+      } else {
+        newBattle.choose(moveType, message);
+      }
+      break;
+    case "forcewin":
+    case "forcetie":
+      newBattle.win(message);
+      break;
+    case "tiebreak":
+      newBattle.tiebreak();
+      break;
+  }
+
+  ctx.body = { battleID: newBattleID, battle: newBattle.toString() };
 });
 
 /**
  * Cleans up the game (and its descendants) so we don't keep them in memory.
  */
-router.del("/game/:id", (ctx, next) => {});
+router.del("/game/:battleID", async ctx => {
+  const queue = [ctx.params.battleID];
+  while (queue.length !== 0) {
+    const battleID = queue.pop();
+  }
+});
 
 app
   .use(bodyParser())
