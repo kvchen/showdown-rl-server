@@ -8,13 +8,14 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "serve": "node --harmony ./src/index.js"
+    "serve": "nodemon --harmony ./src/index.js"
   },
   "dependencies": {
     "koa": "^2.6.1",
     "koa-bodyparser": "^4.2.1",
     "koa-router": "^7.4.0",
     "lodash": "^4.17.11",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "winston": "^3.1.0"
   }
 }

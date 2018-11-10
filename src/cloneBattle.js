@@ -4,6 +4,7 @@ const _ = require("lodash");
 const {
   Dex: { ModdedDex },
   Battle,
+  Pokemon,
   Side
 } = require("./third_party/Pokemon-Showdown/sim");
 
@@ -11,14 +12,12 @@ const {
  * To speed up cloning battles, we omit these keys when cloning.
  * They're all data-related, and aren't mutated over the course of the battle.
  */
-const omittedKeys = new Set(Object.keys(new ModdedDex()))
+const omittedBattleKeys = new Set(Object.keys(new ModdedDex()))
   .add("zMoveTable")
   .add("teamGenerator");
 
-console.warn("Ignoring keys when cloning battles: ", omittedKeys);
-
 function customizer(value, key, object) {
-  if (object instanceof Battle && omittedKeys.has(key)) {
+  if (object instanceof Battle && omittedBattleKeys.has(key)) {
     return value;
   }
 }
@@ -27,11 +26,15 @@ function customizer(value, key, object) {
  * Performs a deep clone of a Battle object.
  */
 function cloneBattle(battle) {
-  return Object.assign(
-    Object.create(Object.getPrototypeOf(battle)),
-    battle,
-    _.cloneDeepWith(battle, customizer)
+  const newBattle = _.cloneDeepWith(battle, customizer);
+  newBattle.sides.forEach(side =>
+    side.pokemon.forEach(pokemon => {
+      pokemon.getHealth = pokemon.getHealthInner.bind(pokemon);
+      pokemon.getDetails = pokemon.getDetailsInner.bind(pokemon);
+    })
   );
+
+  return newBattle;
 }
 
 module.exports = cloneBattle;
