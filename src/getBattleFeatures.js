@@ -1,77 +1,64 @@
 "use strict";
 
-function getPokemonFeatures(pokemon) {
-  const {
-    side,
-    battle,
-    getHealth,
-    getDetails,
-    template,
-    baseTemplate,
-    hp
-    // ...rest,
-  } = pokemon;
+const _ = require("lodash");
 
+function getPokemonFeatures(pokemon) {
+  const { getHealth, getDetails } = pokemon;
   return {
-    hp
-    // health: getHealth(),
-    // details: getDetails()
-    // ...rest
+    ..._.pick(pokemon, [
+      "ateBerry",
+      "fainted",
+      "hp",
+      "lastItem",
+      "maybeDisabled",
+      "maybeTrapped",
+      "moveSlots",
+      "status",
+      "trapped"
+    ]),
+    health: getHealth(),
+    details: getDetails()
+  };
+}
+
+function getSideFeatures(side) {
+  const { active, pokemon, sideConditions } = side;
+  return {
+    ..._.pick(side, ["n", "pokemonLeft"]),
+    active: active.map(getPokemonFeatures),
+    pokemon: pokemon.map(getPokemonFeatures)
+    // TODO: Add side conditions
+    // sideConditions
   };
 }
 
 function getBattleFeatures(battle) {
-  const {
-    log,
-    inputLog,
-    weatherData,
-    terrainData,
-    pseudoWeather,
-    sides,
-    effect,
-    effectData,
-    itemData,
-    gameType,
-    turn,
-    lastUpdate,
-    weather,
-    terrain,
-    ended,
-    started,
-    active,
-    eventDepth,
-    lastMove,
-    activeMove,
-    activeTarget,
-    midTurn
-  } = battle;
-
+  const { sides } = battle;
   return {
-    log,
-    inputLog,
-    // weatherData,
-    // terrainData,
-    // pseudoWeather,
-    // effect,
-    // effectData,
-    // itemData,
-    // gameType,
-    // turn,
-    // lastUpdate,
-    // weather,
-    // terrain,
-    ended,
-    started,
-    active,
-    // eventDepth,
-    // lastMove,
-    // activeMove,
-    // activeTarget,
-    // midTurn,
-    sides: sides.map(side => ({
-      // ...side,
-      pokemon: side.pokemon.map(getPokemonFeatures)
-    }))
+    ..._.pick(battle, [
+      "active",
+      "activeMove",
+      "activeTarget",
+      "effect",
+      "effectData",
+      "ended",
+      "eventDepth",
+      "gameType",
+      "inputLog",
+      "itemData",
+      "lastMove",
+      "lastUpdate",
+      "log",
+      "midTurn",
+      "pseudoWeather",
+      "started",
+      "terrain",
+      "terrainData",
+      "turn",
+      "weather",
+      "weatherData"
+    ]),
+    sides: sides.map(getSideFeatures)
   };
 }
 
