@@ -33,31 +33,30 @@ function getSideFeatures(side) {
 }
 
 function getBattleFeatures(battle) {
-  const { sides } = battle;
+  const { activeTarget, sides } = battle;
   return {
     ..._.pick(battle, [
       "active",
       "activeMove",
-      "activeTarget",
       "effect",
       "effectData",
       "ended",
       "eventDepth",
       "gameType",
       "inputLog",
-      "itemData",
-      "lastMove",
+      // "itemData",
+      // "lastMove",
       "lastUpdate",
       "log",
-      "midTurn",
-      "pseudoWeather",
+      // "pseudoWeather",
       "started",
       "terrain",
-      "terrainData",
+      // "terrainData",
       "turn",
-      "weather",
-      "weatherData"
+      "weather"
+      // "weatherData"
     ]),
+    activeTarget: activeTarget ? getPokemonFeatures(activeTarget) : null,
     sides: sides.map(getSideFeatures)
   };
 }
