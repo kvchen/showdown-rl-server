@@ -8,13 +8,14 @@
 const _ = require("lodash");
 const Koa = require("koa");
 const Router = require("koa-router");
+const pino = require("koa-pino-logger")();
 
 const bodyParser = require("koa-bodyparser");
 const uuidv4 = require("uuid/v4");
 
 const { Battle } = require("./third_party/Pokemon-Showdown/sim");
-const getBattleFeatures = require("./getBattleFeatures");
-const cloneBattle = require("./cloneBattle");
+
+const { clone, getFeatures } = require("./battle");
 
 const app = new Koa();
 const router = new Router();
@@ -26,22 +27,26 @@ const battles = {};
 // type: {[parentBattleID]: {[childMoveKey]: childBattleID}}
 const children = {};
 
-function getMoveKey(moveType, message) {
-  return `${moveType},${message}`;
+function getMoveKey(p1Move, p2Move) {
+  return `${p1Move};${p2Move}`;
 }
 
 /**
  * Start a new game and returns a unique identifier that the client will use
  * to refer to this game.
+ *
+ * @param options
  */
-router.post("/game/new", async (ctx, next) => {
-  const options = {
+router.post("/start", async (ctx, next) => {
+  const battle = new Battle({
     p1: {},
     p2: {},
     ...ctx.request.body
-  };
-  const battle = new Battle(options);
+  });
   const battleID = uuidv4();
+
+  ctx.log.info(`Creating new battle with ID ${battleID}`);
+
   battles[battleID] = battle;
   children[battleID] = {};
 
@@ -50,24 +55,20 @@ router.post("/game/new", async (ctx, next) => {
 });
 
 /**
- * Get a JSON blob with details about the given game
- */
-router.get("/game/:battleID", async (ctx, next) => {
-  const { battleID } = ctx.params;
-  const battle = battles[battleID];
-
-  ctx.battleID = battleID;
-  await next();
-});
-
-/**
  * Makes an (immutable) move. Returns the newly created child battle ID and
  * the battle details.
+ *
+ * @param {string} battleID
+ * @param {string} p1Move
+ * @param {string} p2Move
  */
-router.post("/game/:battleID/move", async (ctx, next) => {
+router.post("/:battleID/move", async (ctx, next) => {
   const { battleID: oldBattleID } = ctx.params;
-  const { moveType, message } = ctx.request.body;
-  const moveKey = getMoveKey(moveType, message);
+  const { p1Move, p2Move } = ctx.request.body;
+  const moveKey = getMoveKey(p1Move, p2Move);
+
+  // If we've already taken a move from some battle state, just return the
+  // cached battle instead of recomputing it.
 
   const cachedBattleID = children[oldBattleID][moveKey];
   if (cachedBattleID != null) {
@@ -76,30 +77,31 @@ router.post("/game/:battleID/move", async (ctx, next) => {
   }
 
   // Copy the old battle to ensure we don't mutate it.
+
   const oldBattle = battles[oldBattleID];
-  const newBattle = cloneBattle(oldBattle);
+  const newBattle = clone(oldBattle);
   const newBattleID = uuidv4();
 
   battles[newBattleID] = newBattle;
   children[newBattleID] = {};
   children[oldBattleID][moveKey] = newBattleID;
 
-  switch (moveType) {
-    case "p1":
-    case "p2":
-      if (message === "undo") {
-        newBattle.undoChoice(moveType);
-      } else {
-        newBattle.choose(moveType, message);
-      }
-      break;
-    case "forcewin":
-    case "forcetie":
-      newBattle.win(message);
-      break;
-    case "tiebreak":
-      newBattle.tiebreak();
-      break;
+  newBattle.choose("p1", p1Move);
+  if (newBattle.p1.choice.error) {
+    ctx.error = {
+      type: "invalid_player_choice",
+      player: 1
+    };
+    return await next();
+  }
+
+  newBattle.choose("p2", p2Move);
+  if (newBattle.p2.choice.error) {
+    ctx.error = {
+      type: "invalid_player_choice",
+      player: 2
+    };
+    return await next();
   }
 
   ctx.battleID = newBattleID;
@@ -108,8 +110,10 @@ router.post("/game/:battleID/move", async (ctx, next) => {
 
 /**
  * Cleans up the game (and its descendants) so we don't keep them in memory.
+ *
+ * @param battleID
  */
-router.del("/game/:battleID", async (ctx, next) => {
+router.del("/:battleID", async (ctx, next) => {
   let queue = [ctx.params.battleID];
   while (queue.length !== 0) {
     const battleID = queue.pop();
@@ -127,13 +131,28 @@ router.del("/game/:battleID", async (ctx, next) => {
 async function battleFeatureMiddleware(ctx, next) {
   const { battleID } = ctx;
   if (battleID) {
-    ctx.body = { battleID, battle: getBattleFeatures(battles[battleID]) };
+    ctx.body = {
+      id: battleID,
+      data: getFeatures(battles[battleID])
+    };
   }
 
   await next();
 }
 
+async function handleError(ctx, next) {
+  await next();
+
+  const { error } = ctx;
+  if (error) {
+    ctx.status = 500;
+    ctx.body = { error };
+  }
+}
+
 app
+  .use(pino)
+  .use(handleError)
   .use(bodyParser())
   .use(router.routes())
   .use(router.allowedMethods())

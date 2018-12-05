@@ -3,10 +3,8 @@
 const _ = require("lodash");
 const {
   Dex: { ModdedDex },
-  Battle,
-  Pokemon,
-  Side
-} = require("./third_party/Pokemon-Showdown/sim");
+  Battle
+} = require("../third_party/Pokemon-Showdown/sim");
 
 /**
  * To speed up cloning battles, we omit these keys when cloning.
@@ -25,7 +23,7 @@ function customizer(value, key, object) {
 /**
  * Performs a deep clone of a Battle object.
  */
-function cloneBattle(battle) {
+function clone(battle) {
   const newBattle = _.cloneDeepWith(battle, customizer);
   newBattle.sides.forEach(side =>
     side.pokemon.forEach(pokemon => {
@@ -37,4 +35,4 @@ function cloneBattle(battle) {
   return newBattle;
 }
 
-module.exports = cloneBattle;
+module.exports = clone;
