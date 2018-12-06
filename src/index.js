@@ -8,7 +8,6 @@
 const _ = require("lodash");
 const Koa = require("koa");
 const Router = require("koa-router");
-const pino = require("koa-pino-logger")();
 
 const bodyParser = require("koa-bodyparser");
 const uuidv4 = require("uuid/v4");
@@ -44,8 +43,6 @@ router.post("/start", async (ctx, next) => {
     ...ctx.request.body
   });
   const battleID = uuidv4();
-
-  ctx.log.info(`Creating new battle with ID ${battleID}`);
 
   battles[battleID] = battle;
   children[battleID] = {};
@@ -131,19 +128,7 @@ async function battleFeatureMiddleware(ctx, next) {
   await next();
 }
 
-async function handleError(ctx, next) {
-  await next();
-
-  const { error } = ctx;
-  if (error) {
-    ctx.status = 500;
-    ctx.body = { error };
-  }
-}
-
 app
-  .use(pino)
-  .use(handleError)
   .use(bodyParser())
   .use(router.routes())
   .use(router.allowedMethods())

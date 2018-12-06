@@ -2,9 +2,9 @@
 
 const _ = require("lodash");
 
-function getMoveFeatures(moveSlot) {
+function getMoveFeatures(pokemon, moveSlot) {
   return {
-    ..._.pick(this.battle.getMove(moveSlot.move), [
+    ..._.pick(pokemon.battle.getMove(moveSlot.move), [
       "accuracy",
       "basePower",
       "category",
@@ -60,7 +60,7 @@ function getPokemonFeatures(pokemon) {
     // moves: pokemon.moves.map(move => ({
     //   ...move.getRequestData()
     // }))
-    moves: pokemon.moveSlots.map(getMoveFeatures, pokemon)
+    moves: pokemon.moveSlots.map(moveSlot => getMoveFeatures(pokemon, moveSlot))
   };
 }
 
@@ -88,15 +88,15 @@ function getFeatures(battle) {
       "started",
       "terrain",
       "turn",
-      "weather"
+      "weather",
 
       // DEBUGGING FEATURES
       // "active",
       // "activeMove",
       // "effect",
       // "effectData",
-      // "inputLog",
-      // "log",
+      "inputLog",
+      "log",
 
       // CIRCULAR REFS
       // "itemData",
