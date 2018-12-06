@@ -2,30 +2,65 @@
 
 const _ = require("lodash");
 
+function getMoveFeatures(moveSlot) {
+  return {
+    ..._.pick(this.battle.getMove(moveSlot.move), [
+      "accuracy",
+      "basePower",
+      "category",
+      "priority",
+      "target",
+      "type"
+    ]),
+    id: moveSlot.id,
+    pp: moveSlot.pp,
+    maxpp: moveSlott.maxpp,
+    disabled: moveSlot.disabled
+  }
+}
+
 /**
  * Based on Side.getRequestData()
  */
 function getPokemonFeatures(pokemon) {
-  return pokemon.getRequestData();
+  // return pokemon.getRequestData();
   return {
-    ident: pokemon.fullname,
-    details: pokemon.details,
+    // ident: pokemon.fullname,
+    // details: pokemon.details,
+    species: pokemon.species,
     condition: pokemon.getHealth(pokemon.side),
+    trapped: pokemon.trapped,
+    status: pokemon.status,
+    fainted: pokemon.fainted,
     active: pokemon.position < pokemon.side.active.length,
     baseAbility: pokemon.baseAbility,
     item: pokemon.item,
-    pokeball: pokemon.pokeball,
+    types: pokemon.types,
+    gender: pokemon.gender,
+    happiness: pokemon.happiness,
+    level: pokemon.level,
+    // pokeball: pokemon.pokeball,
     ability: pokemon.battle.gen > 6 ? pokemon.ability : undefined,
     stats: {
-      atk: pokemon.baseStats["atk"],
-      def: pokemon.baseStats["def"],
-      spa: pokemon.baseStats["spa"],
-      spd: pokemon.baseStats["spd"],
-      spe: pokemon.baseStats["spe"]
+      atk: pokemon.stats["atk"],
+      def: pokemon.stats["def"],
+      spa: pokemon.stats["spa"],
+      spd: pokemon.stats["spd"],
+      spe: pokemon.stats["spe"]
     },
-    moves: pokemon.moves.map(move => ({
-      ...move.getRequestData()
-    }))
+    boosts: {
+      atk: pokemon.boosts["atk"],
+      def: pokemon.boosts["def"],
+      spa: pokemon.boosts["spa"],
+      spd: pokemon.boosts["spd"],
+      spe: pokemon.boosts["spe"],
+      accuracy: pokemon.boosts["accuracy"],
+      evasion: pokemon.boosts["evasion"]
+    },
+    // moves: pokemon.moves.map(move => ({
+    //   ...move.getRequestData()
+    // }))
+    moves: pokemon.moveSlots.map(getMoveFeatures, pokemon)
   };
 }
 
