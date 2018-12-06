@@ -14,7 +14,7 @@ const uuidv4 = require("uuid/v4");
 
 const { Battle } = require("./third_party/Pokemon-Showdown/sim");
 
-const { clone, getFeatures } = require("./battle");
+const { clone, getFeatures, getValidActions } = require("./battle");
 
 const app = new Koa();
 const router = new Router();
@@ -89,8 +89,13 @@ router.post("/:battleID/move", async (ctx, next) => {
   children[newBattleID] = {};
   children[oldBattleID][moveKey] = newBattleID;
 
-  newBattle.choose("p1", p1Move);
-  newBattle.choose("p2", p2Move);
+  if (p1Move) {
+    newBattle.choose("p1", p1Move);
+  }
+
+  if (p2Move) {
+    newBattle.choose("p2", p2Move);
+  }
 
   ctx.battleID = newBattleID;
   await next();
@@ -119,9 +124,11 @@ router.del("/:battleID", async (ctx, next) => {
 async function battleFeatureMiddleware(ctx, next) {
   const { battleID } = ctx;
   if (battleID) {
+    const battle = battles[battleID];
     ctx.body = {
       id: battleID,
-      data: getFeatures(battles[battleID])
+      data: getFeatures(battle),
+      actions: getValidActions(battle)
     };
   }
 
