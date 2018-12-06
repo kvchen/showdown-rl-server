@@ -54,6 +54,12 @@ router.post("/start", async (ctx, next) => {
   await next();
 });
 
+router.get("/:battleID", async (ctx, next) => {
+  const { battleID } = ctx.params;
+  ctx.battleID = battleID;
+  await next();
+});
+
 /**
  * Makes an (immutable) move. Returns the newly created child battle ID and
  * the battle details.
@@ -87,22 +93,7 @@ router.post("/:battleID/move", async (ctx, next) => {
   children[oldBattleID][moveKey] = newBattleID;
 
   newBattle.choose("p1", p1Move);
-  if (newBattle.p1.choice.error) {
-    ctx.error = {
-      type: "invalid_player_choice",
-      player: 1
-    };
-    return await next();
-  }
-
   newBattle.choose("p2", p2Move);
-  if (newBattle.p2.choice.error) {
-    ctx.error = {
-      type: "invalid_player_choice",
-      player: 2
-    };
-    return await next();
-  }
 
   ctx.battleID = newBattleID;
   await next();
