@@ -14,7 +14,7 @@ function getMoveFeatures(moveSlot) {
     ]),
     id: moveSlot.id,
     pp: moveSlot.pp,
-    maxpp: moveSlott.maxpp,
+    maxpp: moveSlot.maxpp,
     disabled: moveSlot.disabled
   }
 }
