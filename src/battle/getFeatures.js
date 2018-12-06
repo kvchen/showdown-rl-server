@@ -16,7 +16,7 @@ function getMoveFeatures(pokemon, moveSlot) {
     pp: moveSlot.pp,
     maxpp: moveSlot.maxpp,
     disabled: moveSlot.disabled
-  }
+  };
 }
 
 /**
@@ -29,6 +29,8 @@ function getPokemonFeatures(pokemon) {
     // details: pokemon.details,
     species: pokemon.species,
     condition: pokemon.getHealth(pokemon.side),
+    hp: pokemon.hp,
+    maxhp: pokemon.maxhp,
     trapped: pokemon.trapped,
     status: pokemon.status,
     fainted: pokemon.fainted,
@@ -89,6 +91,7 @@ function getFeatures(battle) {
       "terrain",
       "turn",
       "weather",
+      "winner",
 
       // DEBUGGING FEATURES
       // "active",
@@ -96,7 +99,7 @@ function getFeatures(battle) {
       // "effect",
       // "effectData",
       "inputLog",
-      "log",
+      "log"
 
       // CIRCULAR REFS
       // "itemData",
