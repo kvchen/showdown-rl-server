@@ -10,7 +10,8 @@ function getMoveFeatures(pokemon, moveSlot) {
       "category",
       "priority",
       "target",
-      "type"
+      "type", 
+      "num"
     ]),
     id: moveSlot.id,
     pp: moveSlot.pp,
@@ -27,6 +28,7 @@ function getPokemonFeatures(pokemon) {
   return {
     // ident: pokemon.fullname,
     // details: pokemon.details,
+    num: pokemon.baseTemplate.num,
     species: pokemon.species,
     condition: pokemon.getHealth(pokemon.side),
     hp: pokemon.hp,
@@ -37,12 +39,14 @@ function getPokemonFeatures(pokemon) {
     active: pokemon.position < pokemon.side.active.length,
     baseAbility: pokemon.baseAbility,
     item: pokemon.item,
+    itemnum: pokemon.battle.getItem(pokemon.item).num,
     types: pokemon.types,
     gender: pokemon.gender,
     happiness: pokemon.happiness,
     level: pokemon.level,
     // pokeball: pokemon.pokeball,
     ability: pokemon.battle.gen > 6 ? pokemon.ability : undefined,
+    abilitynum: pokemon.battle.getAbility(pokemon.ability).num,
     stats: {
       atk: pokemon.stats["atk"],
       def: pokemon.stats["def"],
