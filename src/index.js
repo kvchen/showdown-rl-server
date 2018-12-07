@@ -114,8 +114,8 @@ router.del("/:battleID", async (ctx, next) => {
     battle.destroy();
 
     queue = [...queue, ...Object.values(children[battleID])];
-    battles[battleID] = undefined;
-    children[battleID] = undefined;
+    delete battles[battleID];
+    delete children[battleID];
   }
 
   await next();
@@ -128,7 +128,8 @@ async function battleFeatureMiddleware(ctx, next) {
     ctx.body = {
       id: battleID,
       data: getFeatures(battle),
-      actions: getValidActions(battle)
+      actions: getValidActions(battle),
+      seed: battle.prng.startingSeed
     };
   }
 
