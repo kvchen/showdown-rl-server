@@ -8,7 +8,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "serve": "nodemon --harmony --max-old-space-size=8192 ./src/index.js"
+    "dev": "nodemon --harmony --max-old-space-size=8192 ./src/index.js",
+    "serve": "node --harmony --max-old-space-size=8192 ./src/index.js"
   },
   "dependencies": {
     "koa": "^2.6.1",
